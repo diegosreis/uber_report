@@ -1,4 +1,4 @@
-class Trips(object):
+class Trip(object):
     pickup = ""   
     fare = ""
 
@@ -7,5 +7,5 @@ class Trips(object):
         self.fare = fare
 
     def make_trip(pickup, fare):
-        trip = Trips(pickup, fare)
+        trip = Trip(pickup, fare)
         return trip

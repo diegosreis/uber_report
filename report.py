@@ -1,24 +1,23 @@
 
-from selenium import webdriver
-from models.trips import Trips
-
+import datetime
 import time
+
+from selenium import webdriver
+
+from models.trip import Trip
 
 
 driver = webdriver.Chrome()
-driver.get("https://riders.uber.com/")
+driver.get('https://riders.uber.com/')
 
-start_date = "09/26/17"
-end_date = "10/25/17"
+start_date = datetime.datetime(2017, 9, 26)
+end_date = datetime.datetime(2017, 10, 25)
 
 while "trips" not in driver.current_url:
-#while "trips" not in driver.current_url:
 	time.sleep(5)
-	pass
+
 element = driver.find_element_by_class_name('trip-expand__origin')
 element.click()
-
-
 
 lst = []
 
@@ -28,8 +27,9 @@ canceladas = 0
 while stop == False:
 	trips_table = driver.find_element_by_id('trips-table')
 	trs = driver.find_elements_by_xpath('//*[@id="trips-table"]/tbody/tr[@class = "trip-expand__origin collapsed"]')
+	
 	for tr in trs:
-		pickup = tr.find_elements_by_tag_name('td')[1].text
+		pickup = datetime.datetime.strptime(tr.find_elements_by_tag_name('td')[1].text, '%m/%d/%y')
 
 		if pickup < start_date:
 			stop = True
@@ -45,19 +45,22 @@ while stop == False:
 			fare = 0
 			canceladas = canceladas + 1
 
-		lst.append(Trips.make_trip(pickup, fare))
+		lst.append(Trip.make_trip(pickup, fare))
 
 	page = page + 1
-	driver.get("https://riders.uber.com/trips?page="+str(page))
+	driver.get('https://riders.uber.com/trips?page={}'.format(str(page)))
 	time.sleep(2)
 	element = driver.find_element_by_class_name('trip-expand__origin')
 	element.click()
-total_fare = 0
 
+total_fare = 0
 with open('report.txt', 'wt') as f:
 	f.write('---RELATORIO DE VIAGENS UBER---\n')
+	
 	for item in lst:	
-		f.write('pickup: ' +  item.pickup +' - fare: ' + str(item.fare) + '\n')
+		f.write('pickup: {pickup} - fare: {fare} \n'.format(pickup=item.pickup.date(), fare=str(item.fare)))
 		total_fare = float(total_fare) + float(item.fare)
-	f.write('total: '+ str(total_fare)+ '\n')
+	
+	f.write('total: {total} \n'.format(total=str(total_fare)))
+
 driver.quit()
